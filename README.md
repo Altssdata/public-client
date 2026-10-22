@@ -1,13 +1,13 @@
 # Altss public client
 
-A JavaScript client, TypeScript declarations and command-line reader for Altss's existing public catalogs, JSON Schemas and Markdown documents. Requires Node.js 22 or newer. There are no runtime dependencies, installation scripts, account tokens or telemetry.
+A JavaScript client, TypeScript declarations and command-line reader for Altss's public catalogs, JSON Schemas, Markdown documents and bounded published profile summaries. Requires Node.js 22 or newer. There are no runtime dependencies, installation scripts, account tokens or telemetry.
 
 These are public descriptions and documents. The client does not provide subscription records, execute research tasks, submit listings or handle payments. Documentation MCP is a separate service at https://docs.altss.com/mcp.
 
 ## Install from the public GitHub release
 
 ```sh
-npm install github:Altssdata/public-client#v0.1.0
+npm install github:Altssdata/public-client#v0.2.0
 npx altss-public catalog data
 npx altss-public schema company
 npx altss-public document pricing
@@ -66,3 +66,39 @@ npx altss-public openapi
 Run `npm test` or `npm run check`. Tests cover resource boundaries, credentials, redirects, response limits, HTTP errors, validators, cancellation, deadlines and CLI behavior. Test fixtures do not establish a live service response.
 
 Field definitions and current access terms: [Altss developer reference](https://altss.com/developers). Support: contact@altss.com. Report implementation issues in [this repository](https://github.com/Altssdata/public-client/issues). Do not include credentials or private records in reports.
+
+## Public profile reads and sandbox
+
+```js
+const page = await client.searchProfiles('Daimler Truck', { limit: 2 });
+if (page.status === 200) {
+  console.log(page.data.results);
+  if (page.data.pagination.nextCursor) {
+    const next = await client.searchProfiles('Daimler Truck', { limit: 2, cursor: page.data.pagination.nextCursor });
+    console.log(next.data);
+  }
+}
+const profile = await client.getProfile('daimler-truck-ag');
+
+const sandbox = new AltssPublicClient({ sandbox: true });
+const sample = await sandbox.searchProfiles('Example', { limit: 2 });
+const fixture = await sandbox.getProfile('example-capital-01');
+```
+
+Profile methods use bounded GETs only, with no account or app.altss.com access. Pages contain 1–5 results within at most ten matches. Restart a query when its cursor becomes stale. Missing public slugs return HTTP 404; temporary upstream failures are errors, not empty successful records. Profile reads are private/no-store. A returned environment and rateLimit object describes the serving instance, not a global or per-user allowance. Sandbox mode affects profile methods only and uses clearly labeled fictional fixtures; it never queries production records.
+
+```sh
+npx --no-install altss-public search "Daimler Truck" --limit 2
+npx --no-install altss-public profile daimler-truck-ag
+npx --no-install altss-public search Example --sandbox --limit 2
+```
+
+## Go SDK
+
+The [Go module](./go/README.md) provides the same fixed-origin, anonymous GET boundaries with the Go standard library:
+
+```sh
+go get github.com/Altssdata/public-client/go@v0.1.0
+```
+
+Its source module is in `go/`; version tags use the `go/v0.1.0` form. A source tag does not by itself establish package-proxy availability. Refer to the release's installation verification for actual registry results.
