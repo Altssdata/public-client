@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling>=1.32,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "altss-public-client"
+version = "0.1.0"
+description = "Anonymous, bounded readers for Altss public profiles, catalogs, schemas and Markdown."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "LicenseRef-Proprietary"
+authors = [{name = "Altss", email = "contact@altss.com"}]
+keywords = ["altss", "public-api", "json-schema", "markdown"]
+classifiers = ["Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Typing :: Typed"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://altss.com/developers"
+Documentation = "https://altss.com/developers"
+Repository = "https://github.com/Altssdata/public-client"
+Issues = "https://github.com/Altssdata/public-client/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/altss_public"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/altss_public", "tests", "README.md", "pyproject.toml", "LICENSE"]

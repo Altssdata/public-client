@@ -2,3 +2,9 @@ node_modules/
 *.tgz
 .env*
 coverage/
+__pycache__/
+*.pyc
+python/dist/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
