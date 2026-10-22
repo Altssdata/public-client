@@ -1,0 +1,71 @@
+name: Publish reviewed Python public client
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the reviewed 0.1.0 files after PyPI owner authorization
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-public-client-0-1-0
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.repository == 'Altssdata/public-client' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - &verify-distributions
+        name: Download and verify the exact reviewed distributions
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          expected = {
+              "altss_public_client-0.1.0-py3-none-any.whl": "7b849c3e0892963522b03d2a05820a741da6c2e5b7076af82271a2724f292caf",
+              "altss_public_client-0.1.0.tar.gz": "50f6da6abc19161bb7698542290e4924f51bfd4176705b327ec4fc0e9431a191",
+          }
+          directory = Path("dist")
+          directory.mkdir(exist_ok=True)
+          if any(directory.iterdir()):
+              raise RuntimeError("Distribution directory must be empty")
+          for name, digest in expected.items():
+              url = "https://github.com/Altssdata/public-client/releases/download/python/v0.1.0/" + name
+              request = Request(url, headers={"User-Agent": "Altss-Reviewed-Public-Release/0.1.0"})
+              with urlopen(request, timeout=30) as response:
+                  if response.status != 200:
+                      raise RuntimeError("Release artifact unavailable")
+                  data = response.read(1024 * 1024 + 1)
+              if len(data) > 1024 * 1024 or hashlib.sha256(data).hexdigest() != digest:
+                  raise RuntimeError("Reviewed distribution digest mismatch")
+              (directory / name).write_bytes(data)
+              print(name, digest)
+          PY
+
+  publish:
+    needs: verify
+    if: inputs.publish && github.repository == 'Altssdata/public-client' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - *verify-distributions
+      - name: Publish to PyPI with project-scoped trusted publishing
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
+        with:
+          packages-dir: dist/
+          verify-metadata: true
+          print-hash: true
+          attestations: true
+          skip-existing: false
