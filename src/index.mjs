@@ -20,24 +20,42 @@ export class AltssHttpError extends Error {
 export class AltssPublicClient {
   #fetch;
   #timeout;
-  constructor({ timeoutMs = 10000, fetch: fetchImpl = globalThis.fetch } = {}) {
+  #sandbox;
+  constructor({ timeoutMs = 10000, fetch: fetchImpl = globalThis.fetch, sandbox = false } = {}) {
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000) throw new TypeError('timeoutMs must be an integer from 1 to 60000');
     if (typeof fetchImpl !== 'function') throw new TypeError('A Fetch-compatible function is required');
+    if (typeof sandbox !== 'boolean') throw new TypeError('sandbox must be a boolean');
     this.#fetch = fetchImpl;
     this.#timeout = timeoutMs;
+    this.#sandbox = sandbox;
   }
   getCatalog(name, options) { return this.read(`catalog:${name}`, options); }
   getSchema(name, options) { return this.read(`schema:${name}`, options); }
   getDocument(name, options) { return this.read(`document:${name}`, options); }
+  searchProfiles(query, { limit = 5, cursor, signal } = {}) {
+    if (typeof query !== 'string' || query.trim().length < 2 || query.trim().length > 120 || !/[\p{L}\p{N}]/u.test(query)) throw new TypeError('Use a 2–120 character organization name');
+    if (!Number.isInteger(limit) || limit < 1 || limit > 5) throw new TypeError('limit must be 1–5');
+    if (cursor !== undefined && (typeof cursor !== 'string' || !/^[A-Za-z0-9_-]{1,256}$/.test(cursor))) throw new TypeError('Invalid cursor');
+    const params = new URLSearchParams({ query: query.trim(), limit: String(limit), ...(cursor ? { cursor } : {}) });
+    return this.#get(`/api/v1${this.#sandbox ? '/sandbox' : ''}/public/profiles?${params}`, false, { signal });
+  }
+  getProfile(slug, { signal } = {}) {
+    if (typeof slug !== 'string' || !/^[a-z0-9-]{1,200}$/.test(slug)) throw new TypeError('Invalid public profile slug');
+    return this.#get(`/api/v1${this.#sandbox ? '/sandbox' : ''}/public/profiles/${slug}`, false, { signal });
+  }
   async read(resource, { etag, signal } = {}) {
     if (typeof resource !== 'string' || !Object.hasOwn(resources, resource)) throw new TypeError('Unknown Altss public resource');
+    return this.#get(resources[resource], resource.startsWith('document:'), { etag, signal });
+  }
+  async #get(path, isMarkdown, { etag, signal } = {}) {
     if (etag !== undefined && (typeof etag !== 'string' || !/^(?:W\/)?"[\x21\x23-\x7e]{1,200}"$/.test(etag))) throw new TypeError('etag must be an HTTP entity tag');
-    const url = ORIGIN + resources[resource];
-    const isMarkdown = resource.startsWith('document:');
+    const url = ORIGIN + path;
     const headers = { Accept: isMarkdown ? 'text/markdown' : 'application/json', ...(etag ? { 'If-None-Match': etag } : {}) };
     const timeout = AbortSignal.timeout(this.#timeout);
     const response = await this.#fetch(url, { method: 'GET', headers, credentials: 'omit', redirect: 'error', signal: signal ? AbortSignal.any([timeout, signal]) : timeout });
     const metadata = { url, etag: response.headers.get('etag'), lastModified: response.headers.get('last-modified'), cacheControl: response.headers.get('cache-control') };
+    if (response.headers.has('ratelimit-limit')) metadata.rateLimit = { limit: response.headers.get('ratelimit-limit'), remaining: response.headers.get('ratelimit-remaining'), resetSeconds: response.headers.get('ratelimit-reset') };
+    if (['production','sandbox'].includes(response.headers.get('altss-environment'))) metadata.environment = response.headers.get('altss-environment');
     if (response.status === 304 && etag) return { ...metadata, status: 304, data: null };
     if (response.status !== 200) {
       await response.body?.cancel();

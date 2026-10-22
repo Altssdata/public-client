@@ -1,14 +1,17 @@
 import { AltssPublicClient, resources } from './index.mjs';
-const HELP = `Altss public reader 0.1.0 (Node.js 22+)
+const HELP = `Altss public reader 0.2.0 (Node.js 22+)
 Usage:
   altss-public catalog data|task|commercial
   altss-public schema company|person|fund|evidence|task-result|...
   altss-public document pricing|methodology|coverage|developers|...
   altss-public openapi
+  altss-public search "organization name" --limit 2 --cursor TOKEN --sandbox
+  altss-public profile public-slug --sandbox
   altss-public resources
 Options: --etag '"saved-tag"' --timeout 10000
 Outputs one JSON response envelope; 304 means reuse your stored data.
-Public descriptions and documents only. No login, paid records or writes.
+Public descriptions, documents and bounded profile reads. --sandbox uses fictional profile fixtures.
+No login, app.altss.com access, paid records or writes.
 https://altss.com/developers
 `;
 export async function runCli(args, { stdout = text => process.stdout.write(text), stderr = text => process.stderr.write(text), createClient = options => new AltssPublicClient(options) } = {}) {
@@ -16,17 +19,24 @@ export async function runCli(args, { stdout = text => process.stdout.write(text)
   if (args.length === 1 && args[0] === 'resources') { stdout(JSON.stringify(resources, null, 2)+'\n'); return 0; }
   let index = args[0] === 'openapi' ? 1 : 2;
   const resource = index === 1 ? 'openapi' : `${args[0]}:${args[1]}`;
+  const profileRead = ['search','profile'].includes(args[0]);
   const options = {}, request = {}, seen = new Set();
   try {
-    if (!Object.hasOwn(resources, resource)) throw new Error('Unknown resource; run altss-public resources');
+    if (!profileRead && !Object.hasOwn(resources, resource)) throw new Error('Unknown resource; run altss-public resources');
+    if (profileRead && !args[1]) throw new Error('A public name or slug is required');
     while (index < args.length) {
-      const flag = args[index++], value = args[index++];
-      if (!['--etag','--timeout'].includes(flag) || !value || seen.has(flag)) throw new Error('Invalid or repeated option; run altss-public --help');
+      const flag = args[index++];
+      if (flag === '--sandbox' && profileRead && !seen.has(flag)) { seen.add(flag); options.sandbox = true; continue; }
+      const value = args[index++];
+      const allowed = ['--timeout', ...(profileRead ? args[0] === 'search' ? ['--limit','--cursor'] : [] : ['--etag'])];
+      if (!allowed.includes(flag) || !value || seen.has(flag)) throw new Error('Invalid or repeated option; run altss-public --help');
       seen.add(flag);
       if (flag === '--etag') request.etag = value;
-      else { if (!/^\d+$/.test(value)) throw new Error('Timeout must be an integer'); options.timeoutMs = Number(value); }
+      else if (flag === '--cursor') request.cursor = value;
+      else { if (!/^\d+$/.test(value)) throw new Error('Use an integer'); if (flag === '--limit') request.limit = Number(value); else options.timeoutMs = Number(value); }
     }
-    const result = await createClient(options).read(resource, request);
+    const client = createClient(options);
+    const result = args[0] === 'search' ? await client.searchProfiles(args[1], request) : args[0] === 'profile' ? await client.getProfile(args[1], request) : await client.read(resource, request);
     stdout(JSON.stringify(result, null, 2)+'\n');
     return 0;
   } catch (error) {
