@@ -1,0 +1,17 @@
+{
+  "name": "altss-public-client",
+  "version": "0.1.0",
+  "description": "Altss public catalogs, JSON Schemas and Markdown: JavaScript client and command-line reader.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.mjs" } },
+  "bin": { "altss-public": "./bin/altss-public.mjs" },
+  "files": ["src", "bin", "README.md"],
+  "scripts": { "test": "node --test", "check": "node --check src/index.mjs && node --check src/cli.mjs && node --test" },
+  "repository": { "type": "git", "url": "https://github.com/Altssdata/public-client.git" },
+  "homepage": "https://altss.com/developers",
+  "bugs": "https://github.com/Altssdata/public-client/issues",
+  "author": "Altss <contact@altss.com>",
+  "license": "UNLICENSED",
+  "keywords": ["altss", "public-api", "markdown", "json-schema", "cli"]
+}
