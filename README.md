@@ -98,8 +98,14 @@ npx --no-install altss-public search Example --sandbox --limit 2
 The [Python client](./python/README.md) reads the same named public resources and
 bounded profile summaries using the Python standard library. It requires Python
 3.11 or newer and has no runtime dependencies, credentials, writes or retries.
-Source and wheel publication are separate from a PyPI registry release; see its
-README for the current installation status.
+Version 0.1.0 is [published on PyPI](https://pypi.org/project/altss-public-client/0.1.0/).
+
+```sh
+python -m pip install --only-binary=:all: --no-deps altss-public-client==0.1.0
+```
+
+See its README for usage, the matching GitHub source installation and transport limits.
+The Python, JavaScript and Go packages have separate release versions.
 
 ## Go SDK
 
