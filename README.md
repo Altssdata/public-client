@@ -93,6 +93,14 @@ npx --no-install altss-public profile daimler-truck-ag
 npx --no-install altss-public search Example --sandbox --limit 2
 ```
 
+## MCP stdio package
+
+The separate [Altss Public Profiles MCP package](./mcp/README.md) supplies a local
+stdio connector for the same bounded public summaries. It has its own pinned
+dependencies and version; it does not change this dependency-free JavaScript SDK.
+The hosted remote remains https://altss.com/mcp. Source availability and npm or MCP
+Registry publication are separate release steps.
+
 ## Python SDK
 
 The [Python client](./python/README.md) reads the same named public resources and
