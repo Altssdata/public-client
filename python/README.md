@@ -5,15 +5,25 @@ published profile summaries, catalogs, JSON Schemas and Markdown documents.
 The runtime uses only the Python standard library. It has no account tokens,
 cookies, telemetry, automatic retries or authenticated Product access.
 
+## Install from PyPI
+
+```sh
+python -m pip install --only-binary=:all: --no-deps altss-public-client==0.1.0
+```
+
+Version 0.1.0 is [published on PyPI](https://pypi.org/project/altss-public-client/0.1.0/).
+The wheel and source distribution match the reviewed
+[Python GitHub release](https://github.com/Altssdata/public-client/releases/tag/python/v0.1.0).
+Python, JavaScript and Go have separate release versions.
+
 ## Install from GitHub source
 
 ```sh
 python -m pip install 'git+https://github.com/Altssdata/public-client.git@python/v0.1.0#subdirectory=python'
 ```
 
-This is a versioned GitHub source installation, distinct from a PyPI registry
-release. The Python package version is 0.1.0; the JavaScript package version is
-independent. A prepared wheel does not establish PyPI publication.
+This alternative installs the matching tagged source. Choose one installation
+method for your project.
 
 ## Use
 
