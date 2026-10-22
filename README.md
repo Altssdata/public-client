@@ -93,6 +93,14 @@ npx --no-install altss-public profile daimler-truck-ag
 npx --no-install altss-public search Example --sandbox --limit 2
 ```
 
+## Python SDK
+
+The [Python client](./python/README.md) reads the same named public resources and
+bounded profile summaries using the Python standard library. It requires Python
+3.11 or newer and has no runtime dependencies, credentials, writes or retries.
+Source and wheel publication are separate from a PyPI registry release; see its
+README for the current installation status.
+
 ## Go SDK
 
 The [Go module](./go/README.md) provides the same fixed-origin, anonymous GET boundaries with the Go standard library:
