@@ -1,0 +1,18 @@
+{
+  "name": "altss-public-profiles-mcp",
+  "version": "1.0.0",
+  "description": "Altss MCP stdio server for bounded public profile search and canonical summary reads. No account credentials.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "bin": { "altss-public-profiles-mcp": "bin/server.mjs" },
+  "files": ["bin", "src", "README.md", "server.json"],
+  "scripts": { "test": "node --test test/*.test.mjs", "check": "node --check src/server.mjs && node --check bin/server.mjs && node --test test/*.test.mjs" },
+  "dependencies": { "@modelcontextprotocol/sdk": "1.32.1", "altss-public-client": "0.2.0", "zod": "3.25.76" },
+  "mcpName": "io.github.altss-data/public-profiles",
+  "repository": { "type": "git", "url": "https://github.com/Altssdata/public-client.git", "directory": "mcp" },
+  "homepage": "https://altss.com/developers",
+  "bugs": "https://github.com/Altssdata/public-client/issues",
+  "author": "Altss <contact@altss.com>",
+  "license": "UNLICENSED",
+  "keywords": ["altss", "mcp", "modelcontextprotocol", "public-profiles", "stdio"]
+}
